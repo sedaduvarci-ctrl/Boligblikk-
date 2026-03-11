@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boligblikk – AI-assistent for salgsoppgaver</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F5F0;
+  --white: #FDFCFA;
+  --ink: #1A1814;
+  --ink2: #3D3A35;
+  --muted: #8C897F;
+  --line: #E2DDD5;
+  --green: #2D6A4F;
+  --green-mid: #40916C;
+  --green-pale: #EAF4EE;
+  --amber: #B5621E;
+  --amber-pale: #FBF0E8;
+  --red-pale: #FAEAEA;
+  --red: #C0392B;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;inset:0 0 auto;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:60px;background:rgba(247,245,240,0.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);}
+.logo{font-family:'Lora',serif;font-size:1.25rem;font-weight:600;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:6px;}
+.logo-pill{background:var(--green);color:#fff;font-family:'Outfit',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;margin-bottom:1px;}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{font-size:0.82rem;font-weight:400;letter-spacing:0.05em;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-links a:hover{color:var(--ink);}
+.nav-cta{background:var(--green);color:#fff;border:none;padding:0.45rem 1.2rem;font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:500;border-radius:3px;cursor:pointer;text-decoration:none;transition:background 0.2s;}
+.nav-cta:hover{background:#225a41;}
+
+/* HERO */
+.hero{min-height:100vh;padding-top:60px;display:grid;grid-template-columns:1fr 1fr;background:var(--white);}
+.hero-left{padding:5rem 4rem 4rem 5rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line);}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:1.8rem;opacity:0;animation:up 0.6s 0.1s forwards;}
+.hero-tag::before{content:'';width:20px;height:2px;background:var(--green);border-radius:2px;}
+.hero-h1{font-family:'Lora',serif;font-size:clamp(2.4rem,3.5vw,3.8rem);font-weight:600;line-height:1.12;letter-spacing:-0.02em;margin-bottom:1.5rem;opacity:0;animation:up 0.6s 0.22s forwards;}
+.hero-h1 em{font-style:italic;color:var(--green);}
+.hero-p{font-size:1rem;line-height:1.8;color:var(--muted);font-weight:300;max-width:440px;margin-bottom:2.5rem;opacity:0;animation:up 0.6s 0.34s forwards;}
+.hero-btns{display:flex;gap:0.8rem;opacity:0;animation:up 0.6s 0.46s forwards;}
+.btn-green{background:var(--green);color:#fff;border:none;padding:0.8rem 1.8rem;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:500;border-radius:3px;cursor:pointer;text-decoration:none;transition:background 0.2s,transform 0.15s;display:inline-block;}
+.btn-green:hover{background:#225a41;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--line);padding:0.8rem 1.8rem;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:500;border-radius:3px;cursor:pointer;text-decoration:none;transition:border-color 0.2s;display:inline-block;}
+.btn-ghost:hover{border-color:var(--ink2);}
+.hero-right{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:3rem;opacity:0;animation:fadeIn 0.8s 0.5s forwards;}
+.property-card{background:var(--white);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 48px rgba(0,0,0,0.08);width:100%;max-width:420px;overflow:hidden;}
+.prop-img{height:200px;background:linear-gradient(160deg,#c8d8c0 0%,#9ab89a 40%,#6a9b7a 100%);position:relative;display:flex;align-items:flex-end;padding:1rem;}
+.prop-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,24,20,0.5) 0%,transparent 60%);}
+.prop-address{position:relative;z-index:1;color:#fff;font-size:1rem;font-weight:600;line-height:1.3;}
+.prop-address span{font-size:0.78rem;font-weight:300;opacity:0.8;display:block;}
+.prop-badge{position:absolute;top:1rem;right:1rem;z-index:1;background:var(--green);color:#fff;font-size:0.68rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+.prop-body{padding:1.2rem;}
+.prop-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:1.2rem;}
+.prop-stat{text-align:center;}
+.prop-stat-val{font-size:1rem;font-weight:600;color:var(--ink);}
+.prop-stat-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;}
+.prop-divider{height:1px;background:var(--line);margin:0 -1.2rem 1.2rem;}
+.ai-hint{display:flex;gap:0.8rem;align-items:flex-start;background:var(--green-pale);border:1px solid rgba(45,106,79,0.15);border-radius:4px;padding:0.85rem;}
+.ai-hint-icon{width:24px;height:24px;min-width:24px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Lora',serif;font-size:0.75rem;font-weight:600;}
+.ai-hint-text{font-size:0.8rem;line-height:1.55;color:var(--ink2);font-weight:300;}
+.ai-hint-text strong{font-weight:600;color:var(--green);}
+.ai-hint-src{font-size:0.68rem;color:var(--green-mid);margin-top:4px;display:block;}
+
+/* GENERAL */
+.section-tag{font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:0.9rem;display:flex;align-items:center;gap:8px;}
+.section-tag::before{content:'';width:16px;height:2px;background:var(--green);border-radius:2px;}
+h2{font-family:'Lora',serif;font-size:clamp(1.8rem,2.5vw,2.5rem);font-weight:600;line-height:1.2;letter-spacing:-0.02em;margin-bottom:1.1rem;}
+
+/* OM */
+#om{padding:6rem 5rem;background:var(--white);border-top:1px solid var(--line);}
+.om-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;max-width:1100px;margin:0 auto;align-items:start;}
+.body-p{font-size:0.95rem;line-height:1.8;color:var(--muted);font-weight:300;margin-bottom:0.9rem;}
+.feature-list{display:flex;flex-direction:column;gap:1px;}
+.feat{display:flex;gap:1rem;padding:1.2rem;background:var(--bg);border:1px solid var(--line);transition:border-color 0.2s,background 0.2s;cursor:default;margin-bottom:-1px;}
+.feat:hover{border-color:var(--green);background:var(--green-pale);z-index:1;}
+.feat-num{font-family:'Lora',serif;font-size:0.9rem;font-style:italic;color:var(--green-mid);min-width:22px;padding-top:1px;}
+.feat h4{font-size:0.88rem;font-weight:600;margin-bottom:0.25rem;}
+.feat p{font-size:0.8rem;color:var(--muted);line-height:1.6;font-weight:300;}
+
+/* DEMO */
+#demo{padding:6rem 5rem;background:var(--bg);border-top:1px solid var(--line);}
+.demo-wrap{max-width:1280px;margin:0 auto;}
+.demo-header{text-align:center;margin-bottom:3rem;}
+.demo-header h2{margin-bottom:0.5rem;}
+.demo-header p{font-size:0.9rem;color:var(--muted);font-weight:300;}
+.app-shell{background:var(--white);border:1px solid var(--line);border-radius:8px;box-shadow:0 16px 64px rgba(0,0,0,0.08);overflow:hidden;}
+.app-topbar{background:var(--ink);height:46px;display:flex;align-items:center;padding:0 1.2rem;gap:0.5rem;}
+.tb-dot{width:11px;height:11px;border-radius:50%;}
+.tb-title{margin-left:0.8rem;font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:400;letter-spacing:0.04em;}
+.tb-badge{margin-left:auto;background:rgba(45,106,79,0.8);color:#fff;font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+.app-body{display:grid;grid-template-columns:200px 1fr 320px;height:620px;}
+
+/* Doc nav */
+.doc-nav{border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;}
+.doc-nav-header{padding:1rem;border-bottom:1px solid var(--line);background:var(--bg);}
+.doc-nav-title{font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+.doc-nav-address{font-size:0.85rem;font-weight:600;color:var(--ink);line-height:1.3;}
+.doc-nav-sub{font-size:0.72rem;color:var(--muted);font-weight:300;}
+.doc-sections{flex:1;overflow-y:auto;padding:0.5rem;}
+.doc-sec{padding:0.65rem 0.8rem;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:0.6rem;transition:background 0.15s;margin-bottom:2px;border:1px solid transparent;}
+.doc-sec:hover{background:var(--bg);}
+.doc-sec.active{background:var(--green-pale);border-color:rgba(45,106,79,0.2);}
+.doc-sec-icon{font-size:0.85rem;min-width:16px;}
+.doc-sec-label{font-size:0.78rem;font-weight:500;color:var(--ink2);flex:1;}
+.doc-sec.active .doc-sec-label{color:var(--green);}
+.doc-sec-flag{width:7px;height:7px;border-radius:50%;min-width:7px;}
+.flag-ok{background:#52b788;}.flag-warn{background:#f4a261;}.flag-alert{background:#e63946;}
+
+/* Doc content */
+.doc-content{border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;}
+.doc-content-header{padding:1rem 1.4rem;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:2;}
+.doc-content-title{font-family:'Lora',serif;font-size:1rem;font-weight:600;color:var(--ink);}
+.doc-content-meta{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.doc-body{padding:1.2rem 1.4rem;flex:1;}
+.doc-section-content{display:none;}
+.doc-section-content.visible{display:block;}
+.doc-h3{font-family:'Lora',serif;font-size:0.92rem;font-weight:600;color:var(--ink);margin:1.2rem 0 0.5rem;border-bottom:1px solid var(--line);padding-bottom:0.3rem;}
+.doc-h3:first-child{margin-top:0;}
+.doc-row{display:flex;justify-content:space-between;align-items:baseline;padding:0.38rem 0;border-bottom:1px solid rgba(226,221,213,0.5);font-size:0.8rem;}
+.doc-row-label{color:var(--muted);font-weight:300;}
+.doc-row-val{font-weight:500;color:var(--ink);text-align:right;max-width:55%;}
+.doc-row-val.warn{color:var(--amber);font-weight:600;}
+.doc-row-val.ok{color:var(--green);font-weight:600;}
+.doc-row-val.alert{color:var(--red);font-weight:600;}
+.doc-highlight{background:rgba(45,106,79,0.07);border-left:3px solid var(--green);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;font-weight:300;}
+.doc-highlight strong{font-weight:600;color:var(--green);}
+.doc-warn-box{background:var(--amber-pale);border-left:3px solid var(--amber);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;font-weight:300;}
+.doc-warn-box strong{font-weight:600;color:var(--amber);}
+.doc-alert-box{background:var(--red-pale);border-left:3px solid var(--red);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;font-weight:300;}
+.doc-alert-box strong{font-weight:600;color:var(--red);}
+.doc-p{font-size:0.8rem;line-height:1.7;color:var(--ink2);font-weight:300;margin-bottom:0.7rem;}
+
+/* AI panel */
+.ai-panel{display:flex;flex-direction:column;background:#FAFAF7;}
+.ai-panel-header{padding:0.85rem 1.1rem;border-bottom:1px solid var(--line);background:var(--white);display:flex;align-items:center;gap:0.6rem;}
+.ai-avatar-sm{width:26px;height:26px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Lora',serif;font-size:0.75rem;font-weight:600;}
+.ai-panel-name{font-size:0.82rem;font-weight:600;color:var(--ink);}
+.ai-status{font-size:0.68rem;color:var(--green);font-weight:400;}
+.ai-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.9rem;}
+.ai-msgs::-webkit-scrollbar{width:3px;}
+.ai-msgs::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px;}
+.amsg{display:flex;flex-direction:column;max-width:92%;}
+.amsg.user{align-self:flex-end;}
+.amsg.bot{align-self:flex-start;}
+.amsg-who{font-size:0.62rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.amsg.user .amsg-who{text-align:right;}
+.amsg-bubble{font-size:0.79rem;line-height:1.6;padding:0.7rem 0.85rem;border-radius:4px;font-weight:300;}
+.amsg.user .amsg-bubble{background:var(--green);color:#fff;}
+.amsg.bot .amsg-bubble{background:var(--white);border:1px solid var(--line);color:var(--ink2);}
+.amsg-src{font-size:0.66rem;color:var(--green-mid);margin-top:3px;display:flex;align-items:center;gap:3px;}
+.amsg-src::before{content:'↗';}
+.typing-row{display:none;align-self:flex-start;max-width:92%;}
+.typing-row.show{display:flex;flex-direction:column;}
+.typing-bub{background:var(--white);border:1px solid var(--line);padding:0.7rem 0.85rem;border-radius:4px;display:flex;gap:4px;align-items:center;}
+.typing-bub span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:bounce 1.1s infinite;}
+.typing-bub span:nth-child(2){animation-delay:0.18s;}
+.typing-bub span:nth-child(3){animation-delay:0.36s;}
+.quick-chips{padding:0.6rem 1rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:0.35rem;background:var(--white);}
+.chip{background:transparent;border:1px solid var(--line);color:var(--ink2);font-family:'Outfit',sans-serif;font-size:0.68rem;padding:0.28rem 0.6rem;border-radius:20px;cursor:pointer;transition:border-color 0.15s,background 0.15s,color 0.15s;}
+.chip:hover{border-color:var(--green);background:var(--green-pale);color:var(--green);}
+.ai-input-row{display:flex;border-top:1px solid var(--line);}
+.ai-input{flex:1;background:transparent;border:none;padding:0.75rem 1rem;font-family:'Outfit',sans-serif;font-size:0.8rem;color:var(--ink);outline:none;}
+.ai-input::placeholder{color:var(--muted);opacity:0.7;}
+.ai-send{background:var(--green);color:#fff;border:none;padding:0 1.1rem;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.ai-send:hover{background:#225a41;}
+
+/* KONTAKT */
+#kontakt{padding:6rem 5rem;background:var(--white);border-top:1px solid var(--line);}
+.kontakt-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;max-width:1000px;margin:0 auto;}
+.form{display:flex;flex-direction:column;gap:0.9rem;}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;}
+.fg{display:flex;flex-direction:column;gap:0.3rem;}
+.fg label{font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);}
+.fg input,.fg textarea{background:var(--bg);border:1px solid var(--line);padding:0.72rem 0.9rem;font-family:'Outfit',sans-serif;font-size:0.88rem;color:var(--ink);outline:none;border-radius:3px;transition:border-color 0.15s;resize:none;}
+.fg input:focus,.fg textarea:focus{border-color:var(--green);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted);opacity:0.5;}
+.form-ok{display:none;background:var(--green-pale);border:1px solid rgba(45,106,79,0.25);padding:0.85rem 1rem;color:var(--green);font-size:0.85rem;border-radius:3px;}
+.meta-list{display:flex;flex-direction:column;gap:1.2rem;margin-top:0.5rem;}
+.meta-row{display:flex;gap:1rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line);}
+.meta-row:last-child{border-bottom:none;}
+.meta-k{font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);min-width:80px;padding-top:2px;}
+.meta-v{font-size:0.88rem;color:var(--ink);font-weight:300;line-height:1.6;}
+
+/* FOOTER */
+footer{background:var(--ink);padding:1.3rem 5rem;display:flex;justify-content:space-between;align-items:center;}
+.f-logo{font-family:'Lora',serif;font-size:1.05rem;color:rgba(255,255,255,0.55);font-weight:600;}
+.f-copy{font-size:0.75rem;color:rgba(255,255,255,0.25);font-weight:300;}
+
+/* ANIMATIONS */
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.reveal.on{opacity:1;transform:none;}
+.d1{transition-delay:0.1s}.d2{transition-delay:0.2s}.d3{transition-delay:0.3s}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">Boligblikk <span class="logo-pill">Beta</span></a>
+  <ul class="nav-links">
+    <li><a href="#om">Om prosjektet</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#kontakt">Kontakt</a></li>
+  </ul>
+  <a href="#demo" class="nav-cta">Prøv demoen</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">AI i praksis · Eiendomsmegling</div>
+    <h1 class="hero-h1">Din <em>hjelpende hånd</em> gjennom salgsoppgaven</h1>
+    <p class="hero-p">Boligblikk analyserer salgsoppgaven i sanntid og gir deg raske, presise svar med kildehenvisning – slik at du kan bruke mer tid på kunden.</p>
+    <div class="hero-btns">
+      <a href="#demo" class="btn-green">Se eksempel</a>
+      <a href="#om" class="btn-ghost">Les mer</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="property-card">
+      <div class="prop-img">
+        <div class="prop-img-overlay"></div>
+        <div class="prop-badge">Til salgs</div>
+        <div class="prop-address">Maridalsveien 87B<span>0461 Oslo · Sameie</span></div>
+      </div>
+      <div class="prop-body">
+        <div class="prop-stats">
+          <div class="prop-stat"><div class="prop-stat-val">4 950 000</div><div class="prop-stat-label">Prisantydning</div></div>
+          <div class="prop-stat"><div class="prop-stat-val">68 m²</div><div class="prop-stat-label">P-ROM</div></div>
+          <div class="prop-stat"><div class="prop-stat-val">1987</div><div class="prop-stat-label">Byggeår</div></div>
+        </div>
+        <div class="prop-divider"></div>
+        <div class="ai-hint">
+          <div class="ai-hint-icon">B</div>
+          <div>
+            <div class="ai-hint-text"><strong>Boligblikk flagger:</strong> Høy fellesgjeld (kr 412 000) og TG2 på bad. Vurder om kjøper er gjort kjent med totalkostnaden.</div>
+            <span class="ai-hint-src">↗ Salgsoppgave s. 7 · Tilstandsrapport s. 14</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OM -->
+<section id="om">
+  <div class="om-grid">
+    <div>
+      <div class="section-tag reveal">Om prosjektet</div>
+      <h2 class="reveal d1">Utviklet for å heve kvaliteten i meglerhverdagen</h2>
+      <p class="body-p reveal d2">Boligblikk er laget som del av faget <em>AI i praksis</em>. Vi valgte eiendomsmegling fordi vi ser et konkret behov: meglere bruker verdifull tid på å lete gjennom salgsoppgaver, intranett og regelverk.</p>
+      <p class="body-p reveal d2">Assistenten fungerer som en ekstra kollega som leser dokumentet med deg, markerer det som krever oppmerksomhet, og svarer på spørsmål underveis – alltid med kilden synlig og sporbar.</p>
+    </div>
+    <div class="feature-list reveal d1">
+      <div class="feat"><span class="feat-num">01</span><div><h4>Hjelpende hånd i salgsoppgaven</h4><p>Boligblikk gjennomgår dokumentet og markerer heftelser, fellesgjeld, tilstandsgrader og sameieforhold automatisk.</p></div></div>
+      <div class="feat"><span class="feat-num">02</span><div><h4>Kildesporbare svar</h4><p>Hvert svar er knyttet til riktig side i salgsoppgaven eller relevant lov – megleren ser alltid hvor svaret stammer fra.</p></div></div>
+      <div class="feat"><span class="feat-num">03</span><div><h4>Raske svar på praktiske spørsmål</h4><p>Ikke mer leting i intranett eller venting på support. Still spørsmålet direkte og få svar på sekunder.</p></div></div>
+      <div class="feat"><span class="feat-num">04</span><div><h4>Alltid oppdatert regelverk</h4><p>Boligblikk er koblet til oppdatert lovverk slik at megleren aldri gir råd basert på utdatert informasjon.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="demo-wrap">
+    <div class="demo-header reveal">
+      <div class="section-tag" style="justify-content:center;">Interaktiv demo</div>
+      <h2>Se Boligblikk i arbeid</h2>
+      <p>Klikk på en seksjon i salgsoppgaven til venstre – Boligblikk analyserer og svarer automatisk.</p>
+    </div>
+    <div class="app-shell reveal d1">
+      <div class="app-topbar">
+        <div class="tb-dot" style="background:#FF5F57"></div>
+        <div class="tb-dot" style="background:#FEBC2E"></div>
+        <div class="tb-dot" style="background:#28C840"></div>
+        <span class="tb-title">Boligblikk · Maridalsveien 87B, Oslo</span>
+        <span class="tb-badge">● Aktiv analyse</span>
+      </div>
+      <div class="app-body">
+
+        <!-- Section nav -->
+        <div class="doc-nav">
+          <div class="doc-nav-header">
+            <div class="doc-nav-title">Salgsoppgave</div>
+            <div class="doc-nav-address">Maridalsveien 87B</div>
+            <div class="doc-nav-sub">3-roms · 68 m² · Oslo</div>
+          </div>
+          <div class="doc-sections">
+            <div class="doc-sec active" onclick="showSection('oversikt')" id="nav-oversikt"><span class="doc-sec-icon">🏠</span><span class="doc-sec-label">Boligoversikt</span><div class="doc-sec-flag flag-ok"></div></div>
+            <div class="doc-sec" onclick="showSection('oekonomi')" id="nav-oekonomi"><span class="doc-sec-icon">💰</span><span class="doc-sec-label">Økonomi</span><div class="doc-sec-flag flag-warn"></div></div>
+            <div class="doc-sec" onclick="showSection('tilstand')" id="nav-tilstand"><span class="doc-sec-icon">🔍</span><span class="doc-sec-label">Tilstandsrapport</span><div class="doc-sec-flag flag-warn"></div></div>
+            <div class="doc-sec" onclick="showSection('heftelser')" id="nav-heftelser"><span class="doc-sec-icon">📋</span><span class="doc-sec-label">Heftelser</span><div class="doc-sec-flag flag-ok"></div></div>
+            <div class="doc-sec" onclick="showSection('sameie')" id="nav-sameie"><span class="doc-sec-icon">🏢</span><span class="doc-sec-label">Sameie</span><div class="doc-sec-flag flag-alert"></div></div>
+            <div class="doc-sec" onclick="showSection('nabolag')" id="nav-nabolag"><span class="doc-sec-icon">📍</span><span class="doc-sec-label">Nabolag</span><div class="doc-sec-flag flag-ok"></div></div>
+          </div>
+        </div>
+
+        <!-- Document content -->
+        <div class="doc-content">
+          <div class="doc-content-header">
+            <div class="doc-content-title" id="docTitle">Boligoversikt</div>
+            <div class="doc-content-meta" id="docMeta">Maridalsveien 87B · Side 1–3</div>
+          </div>
+          <div class="doc-body">
+
+            <div class="doc-section-content visible" id="sec-oversikt">
+              <div class="doc-h3">Generell informasjon</div>
+              <div class="doc-row"><span class="doc-row-label">Adresse</span><span class="doc-row-val">Maridalsveien 87B, 0461 Oslo</span></div>
+              <div class="doc-row"><span class="doc-row-label">Boligtype</span><span class="doc-row-val">Eierseksjon / sameie</span></div>
+              <div class="doc-row"><span class="doc-row-label">Etasje</span><span class="doc-row-val">3. etasje (av 4)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Byggeår</span><span class="doc-row-val">1987</span></div>
+              <div class="doc-row"><span class="doc-row-label">P-ROM</span><span class="doc-row-val">68 m²</span></div>
+              <div class="doc-row"><span class="doc-row-label">BRA</span><span class="doc-row-val">72 m²</span></div>
+              <div class="doc-row"><span class="doc-row-label">Antall rom</span><span class="doc-row-val">3 (2 soverom)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Energimerke</span><span class="doc-row-val warn">D – Oransje</span></div>
+              <div class="doc-h3">Priser</div>
+              <div class="doc-row"><span class="doc-row-label">Prisantydning</span><span class="doc-row-val">kr 4 950 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Andel fellesgjeld</span><span class="doc-row-val warn">kr 412 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Totalpris</span><span class="doc-row-val">kr 5 362 000</span></div>
+              <div class="doc-highlight"><strong>Merk:</strong> Totalpris inkl. fellesgjeld er kr 5 362 000 – dette bør kommuniseres tydelig til alle interessenter.</div>
+            </div>
+
+            <div class="doc-section-content" id="sec-oekonomi">
+              <div class="doc-h3">Månedlige kostnader</div>
+              <div class="doc-row"><span class="doc-row-label">Felleskostnader totalt</span><span class="doc-row-val">kr 4 820 / mnd</span></div>
+              <div class="doc-row"><span class="doc-row-label">– herav renter fellesgjeld</span><span class="doc-row-val">kr 1 540 / mnd</span></div>
+              <div class="doc-row"><span class="doc-row-label">– herav avdrag fellesgjeld</span><span class="doc-row-val">kr 980 / mnd</span></div>
+              <div class="doc-row"><span class="doc-row-label">– drift og vedlikehold</span><span class="doc-row-val">kr 2 300 / mnd</span></div>
+              <div class="doc-h3">Fellesgjeld</div>
+              <div class="doc-row"><span class="doc-row-label">Andel fellesgjeld</span><span class="doc-row-val warn">kr 412 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Total fellesgjeld (sameiet)</span><span class="doc-row-val">kr 9 880 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Rente (IN-lån)</span><span class="doc-row-val">6,25 % p.a.</span></div>
+              <div class="doc-row"><span class="doc-row-label">Lånet utløper</span><span class="doc-row-val">2031</span></div>
+              <div class="doc-warn-box"><strong>Obs:</strong> Fellesgjelden er høyere enn snittet for tilsvarende boliger i Oslo. Kjøper bør gjøres eksplisitt kjent med dette.</div>
+              <div class="doc-h3">Skatt og avgifter</div>
+              <div class="doc-row"><span class="doc-row-label">Ligningsverdi (primær)</span><span class="doc-row-val">kr 1 240 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Ligningsverdi (sekundær)</span><span class="doc-row-val">kr 4 960 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Kommunale avgifter</span><span class="doc-row-val">kr 8 450 / år</span></div>
+            </div>
+
+            <div class="doc-section-content" id="sec-tilstand">
+              <div class="doc-h3">Tilstandsgrader – oversikt</div>
+              <div class="doc-row"><span class="doc-row-label">Yttertak</span><span class="doc-row-val ok">TG 1 – Ingen avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Fasade</span><span class="doc-row-val ok">TG 1 – Ingen avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Kjøkken</span><span class="doc-row-val ok">TG 1 – Ingen avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Bad (hovedbad)</span><span class="doc-row-val warn">TG 2 – Avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Gjestebad / WC</span><span class="doc-row-val ok">TG 1 – Ingen avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Elektrisk anlegg</span><span class="doc-row-val warn">TG 2 – Avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">VVS</span><span class="doc-row-val ok">TG 1 – Ingen avvik</span></div>
+              <div class="doc-h3">TG2 – Detaljer</div>
+              <div class="doc-warn-box"><strong>Bad (TG2):</strong> Tettesjikt er ca. 18 år gammelt og nærmer seg teknisk levetid. Membran under fliser er ikke verifisert. Estimert utbedring: kr 80 000–120 000.</div>
+              <div class="doc-warn-box"><strong>Elektrisk (TG2):</strong> Sikringsskap av eldre type. Anbefalt gjennomgang av autorisert elektriker. Estimert kostnad: kr 15 000–25 000.</div>
+            </div>
+
+            <div class="doc-section-content" id="sec-heftelser">
+              <div class="doc-h3">Tinglyste heftelser</div>
+              <div class="doc-row"><span class="doc-row-label">Panteheftelse (DNB)</span><span class="doc-row-val ok">kr 0 (innfridd)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Elektrisk ledning</span><span class="doc-row-val">Tinglyst 1994</span></div>
+              <div class="doc-row"><span class="doc-row-label">Felles leierett parkering</span><span class="doc-row-val">Tinglyst 2002</span></div>
+              <div class="doc-highlight"><strong>Vurdering:</strong> Ingen uvanlige heftelser. Ledningsretten og parkeringsretten er standard for sameier i området og påvirker ikke kjøper negativt.</div>
+              <div class="doc-h3">Servitutter</div>
+              <div class="doc-p">Tinglyst erklæring om felles bruk av grøntarealer bak bygget, datert 15.06.1990. Gjelder alle seksjonseiere i Maridalsveien 85–89. Ikke til hinder for normalt bruk av seksjonen.</div>
+            </div>
+
+            <div class="doc-section-content" id="sec-sameie">
+              <div class="doc-h3">Sameieinformasjon</div>
+              <div class="doc-row"><span class="doc-row-label">Sameiets navn</span><span class="doc-row-val">Maridalsveien Sameie</span></div>
+              <div class="doc-row"><span class="doc-row-label">Antall seksjoner</span><span class="doc-row-val">28</span></div>
+              <div class="doc-row"><span class="doc-row-label">Forkjøpsrett</span><span class="doc-row-val alert">Ja – gjelder</span></div>
+              <div class="doc-row"><span class="doc-row-label">Frist forkjøpsrett</span><span class="doc-row-val">20 virkedager etter aksept</span></div>
+              <div class="doc-row"><span class="doc-row-label">Forretningsfører</span><span class="doc-row-val">OBOS Eiendomsforvaltning</span></div>
+              <div class="doc-h3">Sameiets økonomi</div>
+              <div class="doc-row"><span class="doc-row-label">Årsresultat 2023</span><span class="doc-row-val ok">kr +124 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Egenkapital</span><span class="doc-row-val">kr 2 340 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Planlagt rehabilitering</span><span class="doc-row-val warn">Fasade 2026 (estimert)</span></div>
+              <div class="doc-alert-box"><strong>Viktig – forkjøpsrett:</strong> Alle sameiere må varsles umiddelbart etter budaksept. Frist er 20 virkedager. Manglende varsling kan ugyldiggjøre salget.</div>
+            </div>
+
+            <div class="doc-section-content" id="sec-nabolag">
+              <div class="doc-h3">Beliggenhet</div>
+              <div class="doc-p">Maridalsveien 87B ligger i Nordre Aker bydel, Oslo. Rolig boligbebyggelse med nærhet til Maridalen og marka.</div>
+              <div class="doc-h3">Fasiliteter i nærheten</div>
+              <div class="doc-row"><span class="doc-row-label">Barneskole</span><span class="doc-row-val">Kjelsås skole (8 min gange)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Ungdomsskole</span><span class="doc-row-val">Stovner u-skole (12 min)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Barnehage</span><span class="doc-row-val">2 stk. innen 500 m</span></div>
+              <div class="doc-row"><span class="doc-row-label">Dagligvare</span><span class="doc-row-val">Rema 1000 (4 min gange)</span></div>
+              <div class="doc-row"><span class="doc-row-label">T-bane</span><span class="doc-row-val">Kjelsås st. (6 min gange)</span></div>
+              <div class="doc-row"><span class="doc-row-label">Marka-inngang</span><span class="doc-row-val">Maridalen (7 min sykkel)</span></div>
+              <div class="doc-highlight"><strong>Nabolagsindeks:</strong> Scorer høyt på trygghet (8.4/10), grøntareal (9.1/10) og barnevennlighet (8.8/10).</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- AI chat -->
+        <div class="ai-panel">
+          <div class="ai-panel-header">
+            <div class="ai-avatar-sm">B</div>
+            <div>
+              <div class="ai-panel-name">Boligblikk</div>
+              <div class="ai-status">● Analyserer dokument</div>
+            </div>
+          </div>
+          <div class="ai-msgs" id="aiMsgs">
+            <div class="amsg bot">
+              <span class="amsg-who">Boligblikk</span>
+              <div class="amsg-bubble">Jeg har lest salgsoppgaven for Maridalsveien 87B. Klikk på en seksjon til venstre for automatisk analyse, eller still meg et spørsmål direkte.</div>
+            </div>
+          </div>
+          <div class="typing-row" id="typingRow">
+            <span class="amsg-who">Boligblikk</span>
+            <div class="typing-bub"><span></span><span></span><span></span></div>
+          </div>
+          <div class="quick-chips">
+            <button class="chip" onclick="askAI('Hva er totalpris inkl. fellesgjeld?')">Totalpris</button>
+            <button class="chip" onclick="askAI('Hva betyr TG2 på badet?')">TG2 bad</button>
+            <button class="chip" onclick="askAI('Gjelder forkjøpsrett her?')">Forkjøpsrett</button>
+            <button class="chip" onclick="askAI('Er sameiet i god stand?')">Sameiets økonomi</button>
+          </div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiInput" placeholder="Spør om salgsoppgaven…" onkeypress="if(event.key==='Enter')sendAI()">
+            <button class="ai-send" onclick="sendAI()">Send</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="kontakt-grid">
+    <div>
+      <div class="section-tag reveal">Ta kontakt</div>
+      <h2 class="reveal d1">Interessert i prosjektet?</h2>
+      <p class="body-p reveal d2">Vi er studenter som utvikler dette konseptet videre i faget AI i praksis. Ta kontakt om du har innspill, spørsmål eller vil samarbeide.</p>
+      <div class="meta-list reveal d3">
+        <div class="meta-row"><span class="meta-k">Fag</span><span class="meta-v">AI i praksis</span></div>
+        <div class="meta-row"><span class="meta-k">Bransje</span><span class="meta-v">Eiendomsmegling</span></div>
+        <div class="meta-row"><span class="meta-k">Mål</span><span class="meta-v">Redusere tidsbruk, heve kvalitet på rådgivning og sikre korrekt informasjonsflyt for meglere</span></div>
+      </div>
+    </div>
+    <div class="reveal d1">
+      <div class="form" id="theForm">
+        <div class="form-2">
+          <div class="fg"><label>Navn</label><input type="text" placeholder="Ditt navn"></div>
+          <div class="fg"><label>E-post</label><input type="email" placeholder="din@epost.no"></div>
+        </div>
+        <div class="fg"><label>Melding</label><textarea rows="5" placeholder="Skriv din melding her…"></textarea></div>
+        <button class="btn-green" style="align-self:flex-start" onclick="submitForm()">Send melding</button>
+        <div class="form-ok" id="formOk">✓ Takk! Vi tar kontakt snart.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="f-logo">Boligblikk</span>
+  <span class="f-copy">© 2025 · AI i praksis-prosjekt</span>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on');}),{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+const sectionMeta = {
+  oversikt:{title:'Boligoversikt',meta:'Maridalsveien 87B · Side 1–3'},
+  oekonomi:{title:'Økonomi og kostnader',meta:'Maridalsveien 87B · Side 5–8'},
+  tilstand:{title:'Tilstandsrapport',meta:'Maridalsveien 87B · Side 12–18'},
+  heftelser:{title:'Heftelser og tinglyste rettigheter',meta:'Maridalsveien 87B · Side 9–11'},
+  sameie:{title:'Sameie og forkjøpsrett',meta:'Maridalsveien 87B · Side 4'},
+  nabolag:{title:'Nabolag og beliggenhet',meta:'Maridalsveien 87B · Side 19–20'}
+};
+
+const autoResponses = {
+  oversikt:{t:'Boligoversikten ser ryddig ut. Merk at totalpris inkl. fellesgjeld er kr 5 362 000 – vesentlig høyere enn prisantydningen på kr 4 950 000. Energimerke D kan også være et samtalepunkt med kjøper.',s:'Salgsoppgave s. 1–3'},
+  oekonomi:{t:'Fellesgjelden på kr 412 000 er høy for denne boligtypen i Oslo. Månedlig felleskostnad er kr 4 820, der kr 2 520 er direkte knyttet til fellesgjelden. Kjøper bør informeres tydelig om totalkostnaden og renten på 6,25 %.',s:'Salgsoppgave s. 5–8'},
+  tilstand:{t:'To TG2-punkter: Bad og elektrisk. Badet har aldret tettesjikt (est. kr 80–120 000) og elektrisk anlegg bør gjennomgås (est. kr 15–25 000). Samlet potensiell utbedring: ca. kr 100–145 000.',s:'Tilstandsrapport s. 12–18'},
+  heftelser:{t:'Ingen problematiske heftelser. Pantelånet er innfridd. Elektrisk ledning og parkeringsrett er standard for området. Servitutten om grøntareal er positiv for beboerne.',s:'Salgsoppgave s. 9–11 · Grunnboken'},
+  sameie:{t:'⚠️ Forkjøpsrett gjelder! Alle 28 sameiere må varsles umiddelbart etter budaksept – frist er 20 virkedager. Husk også planlagt fasaderehabiliteringen i 2026, som kan medføre økte felleskostnader.',s:'Eierseksjonsloven §45 · Salgsoppgave s. 4'},
+  nabolag:{t:'Godt nabolag for barnefamilier – to skoler innen 12 min gange, barnehager i nærheten og T-bane på 6 min. Nærhet til Maridalen er et sterkt salgsargument for naturinteresserte kjøpere.',s:'Salgsoppgave s. 19–20'}
+};
+
+const freeAnswers = {
+  'Hva er totalpris inkl. fellesgjeld?':{t:'Totalpris inkl. fellesgjeld er kr 5 362 000 (prisantydning kr 4 950 000 + fellesgjeld kr 412 000). Dette er det reelle beløpet kjøper overtar ansvar for og bør alltid kommuniseres tydelig.',s:'Salgsoppgave s. 1 og s. 6'},
+  'Hva betyr TG2 på badet?':{t:'TG2 betyr "avvik som kan kreve tiltak". Badet har et tettesjikt på ca. 18 år som nærmer seg teknisk levetid. Estimert utbedringskostnad er kr 80 000–120 000. Selger er ansvarlig for kjente feil etter avhendingsloven §3-9.',s:'Tilstandsrapport s. 14 · Avhendingsloven §3-9'},
+  'Gjelder forkjøpsrett her?':{t:'Ja, forkjøpsrett gjelder. Alle 28 sameiere i Maridalsveien Sameie har forkjøpsrett og må varsles etter budaksept. Fristen er 20 virkedager. Varsling håndteres av OBOS Eiendomsforvaltning.',s:'Eierseksjonsloven §45 · Salgsoppgave s. 4'},
+  'Er sameiet i god stand?':{t:'Sameiets økonomi er relativt solid – årsresultat 2023 var +kr 124 000 og egenkapitalen er kr 2 340 000. Merk likevel planlagt fasaderehabiliteringen i 2026, som kan øke felleskostnadene midlertidig.',s:'Sameiets årsregnskap 2023 · Salgsoppgave s. 4'}
+};
+
+function showSection(key) {
+  document.querySelectorAll('.doc-section-content').forEach(el=>el.classList.remove('visible'));
+  document.getElementById('sec-'+key).classList.add('visible');
+  document.querySelectorAll('.doc-sec').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+key).classList.add('active');
+  document.getElementById('docTitle').textContent = sectionMeta[key].title;
+  document.getElementById('docMeta').textContent = sectionMeta[key].meta;
+  showTyping();
+  setTimeout(()=>{ hideTyping(); const r=autoResponses[key]; appendMsg('bot',r.t,r.s); }, 1400);
+}
+
+function askAI(q) { document.getElementById('aiInput').value=q; sendAI(); }
+
+function sendAI() {
+  const inp=document.getElementById('aiInput');
+  const q=inp.value.trim();
+  if(!q) return;
+  inp.value='';
+  appendMsg('user',q,null);
+  showTyping();
+  const r=freeAnswers[q]||{t:'I den fullstendige versjonen søker Boligblikk gjennom hele salgsoppgaven og relevant regelverk for å gi et presist svar med kildehenvisning. Prøv gjerne hurtigspørsmålene nedenfor.',s:null};
+  setTimeout(()=>{ hideTyping(); appendMsg('bot',r.t,r.s); }, 1500);
+}
+
+function appendMsg(who,text,src) {
+  const c=document.getElementById('aiMsgs');
+  const d=document.createElement('div');
+  d.className='amsg '+who;
+  d.innerHTML=`<span class="amsg-who">${who==='user'?'Deg':'Boligblikk'}</span><div class="amsg-bubble">${text}</div>${src?`<span class="amsg-src">${src}</span>`:''}`;
+  c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+
+function showTyping() {
+  const t=document.getElementById('typingRow');
+  t.classList.add('show');
+  document.getElementById('aiMsgs').appendChild(t);
+  document.getElementById('aiMsgs').scrollTop=99999;
+}
+
+function hideTyping() { document.getElementById('typingRow').classList.remove('show'); }
+function submitForm() { document.getElementById('formOk').style.display='block'; document.querySelector('#theForm .btn-green').style.display='none'; }
+</script>
+</body>
+</html>
