@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BoligBlikk – AI for Eiendomsmeglere</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F4F7FB;--white:#FFFFFF;--ink:#0D1B2A;--ink2:#2C3E50;--muted:#7F8C8D;
+  --line:#D5E0EE;--blue:#1A4B9B;--blue-mid:#2563EB;--blue-light:#3B82F6;
+  --blue-pale:#EBF2FF;--amber:#B5621E;--amber-pale:#FBF0E8;
+  --red-pale:#FAEAEA;--red:#C0392B;--green:#1A7A4A;--green-pale:#E8F5EE;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;}
+
+nav{position:fixed;inset:0 0 auto;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:64px;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);box-shadow:0 2px 12px rgba(26,75,155,0.06);}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-text{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:700;color:var(--blue);}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{font-size:0.82rem;font-weight:400;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-links a:hover{color:var(--blue);}
+.nav-cta{background:var(--blue);color:#fff;border:none;padding:0.5rem 1.3rem;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;border-radius:4px;cursor:pointer;text-decoration:none;}
+.nav-cta:hover{background:#143d80;}
+
+.hero{min-height:100vh;padding-top:64px;display:grid;grid-template-columns:1fr 1fr;background:var(--white);}
+.hero-left{padding:5rem 4rem 4rem 5rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line);}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-mid);margin-bottom:1.8rem;opacity:0;animation:up 0.6s 0.1s forwards;}
+.hero-tag::before{content:'';width:20px;height:2px;background:var(--blue-mid);border-radius:2px;}
+.hero-h1{font-family:'Lora',serif;font-size:clamp(2.4rem,3.5vw,3.8rem);font-weight:600;line-height:1.12;letter-spacing:-0.02em;margin-bottom:1.5rem;opacity:0;animation:up 0.6s 0.22s forwards;}
+.hero-h1 em{font-style:italic;color:var(--blue);}
+.hero-p{font-size:1rem;line-height:1.8;color:var(--muted);font-weight:300;max-width:440px;margin-bottom:2.5rem;opacity:0;animation:up 0.6s 0.34s forwards;}
+.hero-btns{display:flex;gap:0.8rem;opacity:0;animation:up 0.6s 0.46s forwards;}
+.btn-blue{background:var(--blue);color:#fff;border:none;padding:0.8rem 1.8rem;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:600;border-radius:4px;cursor:pointer;text-decoration:none;transition:background 0.2s,transform 0.15s;display:inline-block;}
+.btn-blue:hover{background:#143d80;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--ink2);border:1.5px solid var(--line);padding:0.8rem 1.8rem;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:500;border-radius:4px;cursor:pointer;text-decoration:none;transition:border-color 0.2s;display:inline-block;}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.hero-right{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:3rem;opacity:0;animation:fadeIn 0.8s 0.5s forwards;}
+.property-card{background:var(--white);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 48px rgba(26,75,155,0.1);width:100%;max-width:420px;overflow:hidden;}
+.prop-img{height:200px;background:linear-gradient(160deg,#1a4b9b 0%,#2563eb 50%,#3b82f6 100%);position:relative;display:flex;align-items:flex-end;padding:1rem;}
+.prop-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(13,27,42,0.6) 0%,transparent 60%);}
+.prop-address{position:relative;z-index:1;color:#fff;font-size:1rem;font-weight:600;line-height:1.3;}
+.prop-address span{font-size:0.78rem;font-weight:300;opacity:0.8;display:block;}
+.prop-badge{position:absolute;top:1rem;right:1rem;z-index:1;background:var(--blue);color:#fff;font-size:0.68rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+.prop-body{padding:1.2rem;}
+.prop-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:1.2rem;}
+.prop-stat{text-align:center;}
+.prop-stat-val{font-size:1rem;font-weight:600;color:var(--ink);}
+.prop-stat-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;}
+.prop-divider{height:1px;background:var(--line);margin:0 -1.2rem 1.2rem;}
+.ai-hint{display:flex;gap:0.8rem;align-items:flex-start;background:var(--blue-pale);border:1px solid rgba(26,75,155,0.15);border-radius:6px;padding:0.85rem;}
+.ai-hint-icon{width:26px;height:26px;min-width:26px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.75rem;font-weight:700;}
+.ai-hint-text{font-size:0.8rem;line-height:1.55;color:var(--ink2);font-weight:300;}
+.ai-hint-text strong{font-weight:600;color:var(--blue);}
+.ai-hint-src{font-size:0.68rem;color:var(--blue-mid);margin-top:4px;display:block;}
+
+.section-tag{font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-mid);margin-bottom:0.9rem;display:flex;align-items:center;gap:8px;}
+.section-tag::before{content:'';width:16px;height:2px;background:var(--blue-mid);border-radius:2px;}
+h2{font-family:'Lora',serif;font-size:clamp(1.8rem,2.5vw,2.5rem);font-weight:600;line-height:1.2;letter-spacing:-0.02em;margin-bottom:1.1rem;}
+
+#om{padding:6rem 5rem;background:var(--white);border-top:1px solid var(--line);}
+.om-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;max-width:1100px;margin:0 auto;align-items:start;}
+.body-p{font-size:0.95rem;line-height:1.8;color:var(--muted);font-weight:300;margin-bottom:0.9rem;}
+.feature-list{display:flex;flex-direction:column;gap:1px;}
+.feat{display:flex;gap:1rem;padding:1.2rem;background:var(--bg);border:1px solid var(--line);transition:border-color 0.2s,background 0.2s;cursor:default;margin-bottom:-1px;}
+.feat:hover{border-color:var(--blue);background:var(--blue-pale);z-index:1;}
+.feat-num{font-family:'Lora',serif;font-size:0.9rem;font-style:italic;color:var(--blue-light);min-width:22px;padding-top:1px;}
+.feat h4{font-size:0.88rem;font-weight:600;margin-bottom:0.25rem;}
+.feat p{font-size:0.8rem;color:var(--muted);line-height:1.6;font-weight:300;}
+
+/* ── UPLOAD ── */
+#prøv{padding:6rem 5rem;background:var(--blue);border-top:1px solid rgba(255,255,255,0.1);}
+.upload-inner{max-width:1200px;margin:0 auto;}
+.upload-header{text-align:center;margin-bottom:3rem;}
+.upload-header .section-tag{justify-content:center;color:rgba(255,255,255,0.7);}
+.upload-header .section-tag::before{background:rgba(255,255,255,0.5);}
+.upload-header h2{color:#fff;}
+.upload-header p{font-size:0.95rem;color:rgba(255,255,255,0.65);font-weight:300;max-width:500px;margin:0 auto;}
+
+.upload-zone{background:rgba(255,255,255,0.06);border:2px dashed rgba(255,255,255,0.3);border-radius:8px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;}
+.upload-zone:hover,.upload-zone.drag{border-color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.12);}
+.upload-icon{font-size:2.5rem;margin-bottom:1rem;}
+.upload-title{font-size:1.1rem;font-weight:600;color:#fff;margin-bottom:0.5rem;}
+.upload-sub{font-size:0.85rem;color:rgba(255,255,255,0.55);font-weight:300;margin-bottom:1.5rem;}
+.upload-btn-w{background:#fff;color:var(--blue);border:none;padding:0.8rem 2rem;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:600;border-radius:4px;cursor:pointer;}
+.upload-btn-w:hover{background:var(--blue-pale);}
+#fileInput{display:none;}
+
+/* Processing state */
+.processing{display:none;text-align:center;padding:2rem;}
+.processing.show{display:block;}
+.processing-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
+.processing-text{color:#fff;font-size:1rem;font-weight:500;}
+.processing-sub{color:rgba(255,255,255,0.6);font-size:0.85rem;margin-top:0.3rem;font-weight:300;}
+
+/* AI Chat interface after upload */
+.upload-chat{display:none;margin-top:2rem;}
+.upload-chat.show{display:block;}
+
+/* Full-width chat shell */
+.chat-shell{background:var(--white);border-radius:8px;overflow:hidden;box-shadow:0 16px 64px rgba(0,0,0,0.15);}
+.chat-topbar{background:var(--ink);height:46px;display:flex;align-items:center;padding:0 1.2rem;gap:0.5rem;}
+.tb-dot{width:11px;height:11px;border-radius:50%;}
+.tb-title{margin-left:0.8rem;font-size:0.78rem;color:rgba(255,255,255,0.5);}
+.tb-badge{margin-left:auto;background:rgba(26,75,155,0.8);color:#fff;font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+
+.chat-layout{display:grid;grid-template-columns:1fr 380px;height:560px;}
+
+/* Summary panel */
+.summary-panel{border-right:1px solid var(--line);overflow-y:auto;background:var(--bg);display:flex;flex-direction:column;}
+.summary-header{padding:1rem 1.4rem;border-bottom:1px solid var(--line);background:var(--white);position:sticky;top:0;z-index:2;}
+.summary-title{font-family:'Lora',serif;font-size:0.95rem;font-weight:600;color:var(--ink);}
+.summary-sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.summary-body{padding:1.2rem 1.4rem;flex:1;}
+.summary-section{margin-bottom:1.2rem;}
+.sum-tag{font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:0.5rem;display:flex;align-items:center;gap:6px;}
+.sum-tag::before{content:'';width:12px;height:2px;background:var(--blue);border-radius:2px;}
+.sum-text{font-size:0.82rem;line-height:1.65;color:var(--ink2);font-weight:300;}
+.flag-box{border-radius:4px;padding:0.6rem 0.8rem;font-size:0.79rem;line-height:1.6;margin-bottom:0.6rem;font-weight:300;}
+.flag-box.warn{background:var(--amber-pale);border-left:3px solid var(--amber);}
+.flag-box.alert{background:var(--red-pale);border-left:3px solid var(--red);}
+.flag-box.ok{background:var(--green-pale);border-left:3px solid var(--green);}
+.flag-box.info{background:var(--blue-pale);border-left:3px solid var(--blue);}
+.flag-box strong{font-weight:600;}
+.flag-box.warn strong{color:var(--amber);}
+.flag-box.alert strong{color:var(--red);}
+.flag-box.ok strong{color:var(--green);}
+.flag-box.info strong{color:var(--blue);}
+.loading-summary{padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem;}
+.loading-dots::after{content:'';animation:dots 1.5s infinite;}
+
+/* Chat panel */
+.ai-chat-panel{display:flex;flex-direction:column;background:#F8FAFF;}
+.ai-chat-header{padding:0.85rem 1.1rem;border-bottom:1px solid var(--line);background:var(--white);display:flex;align-items:center;gap:0.6rem;}
+.ai-avatar{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8rem;font-weight:700;}
+.ai-name{font-size:0.82rem;font-weight:600;color:var(--ink);}
+.ai-st{font-size:0.68rem;color:var(--blue-mid);}
+.chat-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.9rem;}
+.chat-msgs::-webkit-scrollbar{width:3px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--line);}
+.msg{display:flex;flex-direction:column;max-width:92%;}
+.msg.user{align-self:flex-end;}
+.msg.bot{align-self:flex-start;}
+.msg-who{font-size:0.62rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.msg.user .msg-who{text-align:right;}
+.msg-bub{font-size:0.8rem;line-height:1.65;padding:0.75rem 0.9rem;border-radius:6px;font-weight:300;}
+.msg.user .msg-bub{background:var(--blue);color:#fff;}
+.msg.bot .msg-bub{background:var(--white);border:1px solid var(--line);color:var(--ink2);}
+.msg-src{font-size:0.66rem;color:var(--blue-mid);margin-top:3px;display:flex;align-items:center;gap:3px;}
+.msg-src::before{content:'↗';}
+.typing{display:none;align-self:flex-start;max-width:92%;}
+.typing.show{display:flex;flex-direction:column;}
+.typing-bub{background:var(--white);border:1px solid var(--line);padding:0.75rem 0.9rem;border-radius:6px;display:flex;gap:4px;}
+.typing-bub span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:bounce 1.1s infinite;}
+.typing-bub span:nth-child(2){animation-delay:0.18s;}
+.typing-bub span:nth-child(3){animation-delay:0.36s;}
+.chips{padding:0.6rem 1rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:0.35rem;background:var(--white);}
+.chip{background:transparent;border:1px solid var(--line);color:var(--ink2);font-family:'Outfit',sans-serif;font-size:0.7rem;padding:0.3rem 0.65rem;border-radius:20px;cursor:pointer;transition:border-color 0.15s,background 0.15s,color 0.15s;}
+.chip:hover{border-color:var(--blue);background:var(--blue-pale);color:var(--blue);}
+.input-row{display:flex;border-top:1px solid var(--line);}
+.chat-input{flex:1;background:transparent;border:none;padding:0.8rem 1rem;font-family:'Outfit',sans-serif;font-size:0.82rem;color:var(--ink);outline:none;}
+.chat-input::placeholder{color:var(--muted);opacity:0.7;}
+.send-btn{background:var(--blue);color:#fff;border:none;padding:0 1.2rem;font-family:'Outfit',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;transition:background 0.15s;}
+.send-btn:hover{background:#143d80;}
+
+/* DEMO */
+#demo{padding:6rem 5rem;background:var(--bg);border-top:1px solid var(--line);}
+.demo-wrap{max-width:1280px;margin:0 auto;}
+.demo-header{text-align:center;margin-bottom:3rem;}
+.demo-header p{font-size:0.9rem;color:var(--muted);font-weight:300;}
+.app-shell{background:var(--white);border:1px solid var(--line);border-radius:8px;box-shadow:0 16px 64px rgba(26,75,155,0.08);overflow:hidden;}
+.app-topbar{background:var(--ink);height:46px;display:flex;align-items:center;padding:0 1.2rem;gap:0.5rem;}
+.app-body{display:grid;grid-template-columns:200px 1fr 320px;height:600px;}
+.doc-nav{border-right:1px solid var(--line);display:flex;flex-direction:column;}
+.doc-nav-header{padding:1rem;border-bottom:1px solid var(--line);background:var(--bg);}
+.doc-nav-title{font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+.doc-nav-address{font-size:0.85rem;font-weight:600;color:var(--ink);line-height:1.3;}
+.doc-nav-sub{font-size:0.72rem;color:var(--muted);font-weight:300;}
+.doc-sections{flex:1;overflow-y:auto;padding:0.5rem;}
+.doc-sec{padding:0.65rem 0.8rem;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:0.6rem;transition:background 0.15s;margin-bottom:2px;border:1px solid transparent;}
+.doc-sec:hover{background:var(--bg);}
+.doc-sec.active{background:var(--blue-pale);border-color:rgba(26,75,155,0.2);}
+.doc-sec-icon{font-size:0.85rem;min-width:16px;}
+.doc-sec-label{font-size:0.78rem;font-weight:500;color:var(--ink2);flex:1;}
+.doc-sec.active .doc-sec-label{color:var(--blue);}
+.doc-sec-flag{width:7px;height:7px;border-radius:50%;min-width:7px;}
+.flag-ok{background:#52b788;}.flag-warn{background:#f4a261;}.flag-alert{background:#e63946;}
+.doc-content{border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;}
+.doc-content-header{padding:1rem 1.4rem;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:2;}
+.doc-content-title{font-family:'Lora',serif;font-size:1rem;font-weight:600;color:var(--ink);}
+.doc-content-meta{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.doc-body{padding:1.2rem 1.4rem;flex:1;}
+.doc-sc{display:none;}.doc-sc.v{display:block;}
+.doc-h3{font-family:'Lora',serif;font-size:0.92rem;font-weight:600;color:var(--ink);margin:1.2rem 0 0.5rem;border-bottom:1px solid var(--line);padding-bottom:0.3rem;}
+.doc-h3:first-child{margin-top:0;}
+.doc-row{display:flex;justify-content:space-between;padding:0.38rem 0;border-bottom:1px solid rgba(213,224,238,0.5);font-size:0.8rem;}
+.doc-row-label{color:var(--muted);font-weight:300;}
+.doc-row-val{font-weight:500;color:var(--ink);}
+.doc-row-val.warn{color:var(--amber);font-weight:600;}
+.doc-row-val.ok{color:var(--green);font-weight:600;}
+.doc-row-val.alert{color:var(--red);font-weight:600;}
+.doc-hl{background:var(--blue-pale);border-left:3px solid var(--blue);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;font-weight:300;}
+.doc-hl strong{font-weight:600;color:var(--blue);}
+.doc-wb{background:var(--amber-pale);border-left:3px solid var(--amber);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;}
+.doc-wb strong{font-weight:600;color:var(--amber);}
+.doc-ab{background:var(--red-pale);border-left:3px solid var(--red);padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--ink2);line-height:1.6;margin:0.8rem 0;border-radius:0 3px 3px 0;}
+.doc-ab strong{font-weight:600;color:var(--red);}
+.ai-panel{display:flex;flex-direction:column;background:#F8FAFF;}
+.ai-panel-header{padding:0.85rem 1.1rem;border-bottom:1px solid var(--line);background:var(--white);display:flex;align-items:center;gap:0.6rem;}
+.ai-avatar-sm{width:26px;height:26px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.75rem;font-weight:700;}
+.ai-panel-name{font-size:0.82rem;font-weight:600;color:var(--ink);}
+.ai-status{font-size:0.68rem;color:var(--blue-mid);}
+.ai-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.9rem;}
+.amsg{display:flex;flex-direction:column;max-width:92%;}
+.amsg.user{align-self:flex-end;}
+.amsg.bot{align-self:flex-start;}
+.amsg-who{font-size:0.62rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.amsg.user .amsg-who{text-align:right;}
+.amsg-bubble{font-size:0.79rem;line-height:1.6;padding:0.7rem 0.85rem;border-radius:4px;font-weight:300;}
+.amsg.user .amsg-bubble{background:var(--blue);color:#fff;}
+.amsg.bot .amsg-bubble{background:var(--white);border:1px solid var(--line);color:var(--ink2);}
+.amsg-src{font-size:0.66rem;color:var(--blue-mid);margin-top:3px;display:flex;align-items:center;gap:3px;}
+.amsg-src::before{content:'↗';}
+.typing-row{display:none;align-self:flex-start;max-width:92%;}
+.typing-row.show{display:flex;flex-direction:column;}
+.typing-bub{background:var(--white);border:1px solid var(--line);padding:0.7rem 0.85rem;border-radius:4px;display:flex;gap:4px;}
+.typing-bub span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:bounce 1.1s infinite;}
+.typing-bub span:nth-child(2){animation-delay:0.18s;}
+.typing-bub span:nth-child(3){animation-delay:0.36s;}
+.quick-chips{padding:0.6rem 1rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:0.35rem;background:var(--white);}
+.qchip{background:transparent;border:1px solid var(--line);color:var(--ink2);font-family:'Outfit',sans-serif;font-size:0.68rem;padding:0.28rem 0.6rem;border-radius:20px;cursor:pointer;transition:border-color 0.15s,background 0.15s,color 0.15s;}
+.qchip:hover{border-color:var(--blue);background:var(--blue-pale);color:var(--blue);}
+.ai-input-row{display:flex;border-top:1px solid var(--line);}
+.ai-input{flex:1;background:transparent;border:none;padding:0.75rem 1rem;font-family:'Outfit',sans-serif;font-size:0.8rem;color:var(--ink);outline:none;}
+.ai-input::placeholder{color:var(--muted);opacity:0.7;}
+.ai-send{background:var(--blue);color:#fff;border:none;padding:0 1.1rem;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;}
+.ai-send:hover{background:#143d80;}
+
+#kontakt{padding:6rem 5rem;background:var(--white);border-top:1px solid var(--line);}
+.kontakt-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;max-width:1000px;margin:0 auto;}
+.form{display:flex;flex-direction:column;gap:0.9rem;}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;}
+.fg{display:flex;flex-direction:column;gap:0.3rem;}
+.fg label{font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);}
+.fg input,.fg textarea{background:var(--bg);border:1px solid var(--line);padding:0.72rem 0.9rem;font-family:'Outfit',sans-serif;font-size:0.88rem;color:var(--ink);outline:none;border-radius:4px;transition:border-color 0.15s;resize:none;}
+.fg input:focus,.fg textarea:focus{border-color:var(--blue);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted);opacity:0.5;}
+.form-ok{display:none;background:var(--blue-pale);border:1px solid rgba(26,75,155,0.25);padding:0.85rem 1rem;color:var(--blue);font-size:0.85rem;border-radius:4px;}
+.meta-list{display:flex;flex-direction:column;gap:1.2rem;margin-top:0.5rem;}
+.meta-row{display:flex;gap:1rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line);}
+.meta-row:last-child{border-bottom:none;}
+.meta-k{font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);min-width:80px;padding-top:2px;}
+.meta-v{font-size:0.88rem;color:var(--ink);font-weight:300;line-height:1.6;}
+
+footer{background:var(--ink);padding:1.3rem 5rem;display:flex;justify-content:space-between;align-items:center;}
+.f-logo{font-size:1.05rem;color:rgba(255,255,255,0.6);font-weight:700;}
+.f-copy{font-size:0.75rem;color:rgba(255,255,255,0.25);font-weight:300;}
+
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes dots{0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.reveal.on{opacity:1;transform:none;}
+.d1{transition-delay:0.1s}.d2{transition-delay:0.2s}.d3{transition-delay:0.3s}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <svg width="34" height="34" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="12" fill="#1A4B9B"/><path d="M20 70 L50 30 L80 70" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="38" y="52" width="24" height="18" rx="2" fill="white"/><circle cx="72" cy="35" r="10" fill="#3B82F6"/><path d="M68 35 L71 38 L76 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="logo-text">BoligBlikk</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#om">Om</a></li>
+    <li><a href="#prøv">Last opp</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#kontakt">Kontakt</a></li>
+  </ul>
+  <a href="#prøv" class="nav-cta">Prøv selv →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">AI i praksis · Eiendomsmegling</div>
+    <h1 class="hero-h1">Din <em>hjelpende hånd</em> gjennom salgsoppgaven</h1>
+    <p class="hero-p">BoligBlikk analyserer salgsoppgaven i sanntid og gir deg raske, presise svar med kildehenvisning – slik at du kan bruke mer tid på kunden.</p>
+    <div class="hero-btns">
+      <a href="#prøv" class="btn-blue">Last opp din salgsoppgave</a>
+      <a href="#demo" class="btn-ghost">Se demo</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="property-card">
+      <div class="prop-img">
+        <div class="prop-img-overlay"></div>
+        <div class="prop-badge">Til salgs</div>
+        <div class="prop-address">Maridalsveien 87B<span>0461 Oslo · Sameie</span></div>
+      </div>
+      <div class="prop-body">
+        <div class="prop-stats">
+          <div class="prop-stat"><div class="prop-stat-val">4 950 000</div><div class="prop-stat-label">Prisantydning</div></div>
+          <div class="prop-stat"><div class="prop-stat-val">68 m²</div><div class="prop-stat-label">P-ROM</div></div>
+          <div class="prop-stat"><div class="prop-stat-val">1987</div><div class="prop-stat-label">Byggeår</div></div>
+        </div>
+        <div class="prop-divider"></div>
+        <div class="ai-hint">
+          <div class="ai-hint-icon">B</div>
+          <div>
+            <div class="ai-hint-text"><strong>BoligBlikk flagger:</strong> Høy fellesgjeld (kr 412 000) og TG2 på bad. Vurder om kjøper er gjort kjent med totalkostnaden.</div>
+            <span class="ai-hint-src">↗ Salgsoppgave s. 7 · Tilstandsrapport s. 14</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OM -->
+<section id="om">
+  <div class="om-grid">
+    <div>
+      <div class="section-tag reveal">Om prosjektet</div>
+      <h2 class="reveal d1">Utviklet for meglerhverdagen</h2>
+      <p class="body-p reveal d2">BoligBlikk er laget i faget <em>AI i praksis</em>. Last opp en salgsoppgave – assistenten leser dokumentet, markerer det som krever oppmerksomhet og svarer på spørsmål med kilden synlig.</p>
+    </div>
+    <div class="feature-list reveal d1">
+      <div class="feat"><span class="feat-num">01</span><div><h4>Last opp PDF direkte</h4><p>Ingen konvertering. Bare last opp salgsoppgaven fra Finn.no og BoligBlikk leser den automatisk.</p></div></div>
+      <div class="feat"><span class="feat-num">02</span><div><h4>AI analyserer og flagger</h4><p>Fellesgjeld, TG2/TG3, forkjøpsrett og heftelser flagges automatisk med forklaring.</p></div></div>
+      <div class="feat"><span class="feat-num">03</span><div><h4>Still spørsmål fritt</h4><p>Spør om hva som helst i dokumentet og få svar med kildehenvisning på sekunder.</p></div></div>
+      <div class="feat"><span class="feat-num">04</span><div><h4>Alltid oppdatert regelverk</h4><p>Koblet til avhendingsloven, eierseksjonsloven og andre relevante lover.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LAST OPP -->
+<section id="prøv">
+  <div class="upload-inner">
+    <div class="upload-header reveal">
+      <div class="section-tag">Last opp din salgsoppgave</div>
+      <h2>Last opp PDF – få analyse på sekunder</h2>
+      <p>Bare dra og slipp salgsoppgaven. BoligBlikk leser hele dokumentet og er klar til å svare.</p>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="upload-zone reveal d1" id="dropZone"
+      onclick="document.getElementById('fileInput').click()"
+      ondragover="ev(event,'drag')" ondragleave="ev(event,'')" ondrop="drop(event)">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Dra og slipp salgsoppgaven her</div>
+      <div class="upload-sub">PDF fra Finn.no eller eget arkiv · Filen forlater ikke nettleseren din</div>
+      <button class="upload-btn-w" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Velg fil fra datamaskinen</button>
+      <input type="file" id="fileInput" accept=".pdf" onchange="handleFile(event)">
+    </div>
+
+    <!-- Processing -->
+    <div class="processing" id="processing">
+      <div class="processing-spinner"></div>
+      <div class="processing-text" id="procText">Leser salgsoppgaven…</div>
+      <div class="processing-sub" id="procSub">Dette tar vanligvis 5–15 sekunder</div>
+    </div>
+
+    <!-- Chat interface -->
+    <div class="upload-chat" id="uploadChat">
+      <div class="chat-shell">
+        <div class="chat-topbar">
+          <div class="tb-dot" style="background:#FF5F57"></div>
+          <div class="tb-dot" style="background:#FEBC2E"></div>
+          <div class="tb-dot" style="background:#28C840"></div>
+          <span class="tb-title" id="chatTitle">Din salgsoppgave</span>
+          <span class="tb-badge">● Analyse fullført</span>
+        </div>
+        <div class="chat-layout">
+          <!-- Summary -->
+          <div class="summary-panel">
+            <div class="summary-header">
+              <div class="summary-title">Automatisk analyse</div>
+              <div class="summary-sub">Flaggede punkter fra dokumentet</div>
+            </div>
+            <div class="summary-body" id="summaryBody">
+              <div class="loading-summary">Analyserer<span class="loading-dots"></span></div>
+            </div>
+          </div>
+          <!-- Chat -->
+          <div class="ai-chat-panel">
+            <div class="ai-chat-header">
+              <div class="ai-avatar">B</div>
+              <div>
+                <div class="ai-name">BoligBlikk</div>
+                <div class="ai-st" id="aiSt">● Klar</div>
+              </div>
+            </div>
+            <div class="chat-msgs" id="chatMsgs">
+              <div class="msg bot">
+                <span class="msg-who">BoligBlikk</span>
+                <div class="msg-bub">Jeg leser salgsoppgaven din nå…</div>
+              </div>
+            </div>
+            <div class="typing" id="chatTyping">
+              <span class="msg-who">BoligBlikk</span>
+              <div class="typing-bub"><span></span><span></span><span></span></div>
+            </div>
+            <div class="chips" id="chatChips"></div>
+            <div class="input-row">
+              <input class="chat-input" id="chatInput" placeholder="Spør om salgsoppgaven…" onkeypress="if(event.key==='Enter')sendChat()">
+              <button class="send-btn" onclick="sendChat()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="demo-wrap">
+    <div class="demo-header reveal">
+      <div class="section-tag" style="justify-content:center;">Eksempel – interaktiv demo</div>
+      <h2>Se BoligBlikk i arbeid</h2>
+      <p>Klikk på en seksjon – BoligBlikk analyserer og svarer automatisk.</p>
+    </div>
+    <div class="app-shell reveal d1">
+      <div class="app-topbar">
+        <div class="tb-dot" style="background:#FF5F57"></div>
+        <div class="tb-dot" style="background:#FEBC2E"></div>
+        <div class="tb-dot" style="background:#28C840"></div>
+        <span class="tb-title" style="margin-left:0.8rem;font-size:0.78rem;color:rgba(255,255,255,0.5);">BoligBlikk · Maridalsveien 87B, Oslo</span>
+        <span class="tb-badge">● Aktiv analyse</span>
+      </div>
+      <div class="app-body">
+        <div class="doc-nav">
+          <div class="doc-nav-header">
+            <div class="doc-nav-title">Salgsoppgave</div>
+            <div class="doc-nav-address">Maridalsveien 87B</div>
+            <div class="doc-nav-sub">3-roms · 68 m² · Oslo</div>
+          </div>
+          <div class="doc-sections">
+            <div class="doc-sec active" onclick="ds('oversikt')" id="dn-oversikt"><span class="doc-sec-icon">🏠</span><span class="doc-sec-label">Boligoversikt</span><div class="doc-sec-flag flag-ok"></div></div>
+            <div class="doc-sec" onclick="ds('oekonomi')" id="dn-oekonomi"><span class="doc-sec-icon">💰</span><span class="doc-sec-label">Økonomi</span><div class="doc-sec-flag flag-warn"></div></div>
+            <div class="doc-sec" onclick="ds('tilstand')" id="dn-tilstand"><span class="doc-sec-icon">🔍</span><span class="doc-sec-label">Tilstandsrapport</span><div class="doc-sec-flag flag-warn"></div></div>
+            <div class="doc-sec" onclick="ds('heftelser')" id="dn-heftelser"><span class="doc-sec-icon">📋</span><span class="doc-sec-label">Heftelser</span><div class="doc-sec-flag flag-ok"></div></div>
+            <div class="doc-sec" onclick="ds('sameie')" id="dn-sameie"><span class="doc-sec-icon">🏢</span><span class="doc-sec-label">Sameie</span><div class="doc-sec-flag flag-alert"></div></div>
+            <div class="doc-sec" onclick="ds('nabolag')" id="dn-nabolag"><span class="doc-sec-icon">📍</span><span class="doc-sec-label">Nabolag</span><div class="doc-sec-flag flag-ok"></div></div>
+          </div>
+        </div>
+        <div class="doc-content">
+          <div class="doc-content-header">
+            <div class="doc-content-title" id="dTitle">Boligoversikt</div>
+            <div class="doc-content-meta" id="dMeta">Maridalsveien 87B · Side 1–3</div>
+          </div>
+          <div class="doc-body">
+            <div class="doc-sc v" id="ds-oversikt">
+              <div class="doc-h3">Generell informasjon</div>
+              <div class="doc-row"><span class="doc-row-label">Adresse</span><span class="doc-row-val">Maridalsveien 87B, 0461 Oslo</span></div>
+              <div class="doc-row"><span class="doc-row-label">Boligtype</span><span class="doc-row-val">Eierseksjon / sameie</span></div>
+              <div class="doc-row"><span class="doc-row-label">Byggeår</span><span class="doc-row-val">1987</span></div>
+              <div class="doc-row"><span class="doc-row-label">P-ROM</span><span class="doc-row-val">68 m²</span></div>
+              <div class="doc-row"><span class="doc-row-label">Energimerke</span><span class="doc-row-val warn">D – Oransje</span></div>
+              <div class="doc-h3">Priser</div>
+              <div class="doc-row"><span class="doc-row-label">Prisantydning</span><span class="doc-row-val">kr 4 950 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Andel fellesgjeld</span><span class="doc-row-val warn">kr 412 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Totalpris</span><span class="doc-row-val">kr 5 362 000</span></div>
+              <div class="doc-hl"><strong>Merk:</strong> Totalpris inkl. fellesgjeld er kr 5 362 000 – kommuniser dette tydelig.</div>
+            </div>
+            <div class="doc-sc" id="ds-oekonomi">
+              <div class="doc-h3">Månedlige kostnader</div>
+              <div class="doc-row"><span class="doc-row-label">Felleskostnader</span><span class="doc-row-val">kr 4 820 / mnd</span></div>
+              <div class="doc-row"><span class="doc-row-label">Andel fellesgjeld</span><span class="doc-row-val warn">kr 412 000</span></div>
+              <div class="doc-row"><span class="doc-row-label">Rente</span><span class="doc-row-val">6,25 % p.a.</span></div>
+              <div class="doc-wb"><strong>Obs:</strong> Fellesgjelden er høyere enn snittet for Oslo.</div>
+            </div>
+            <div class="doc-sc" id="ds-tilstand">
+              <div class="doc-h3">Tilstandsgrader</div>
+              <div class="doc-row"><span class="doc-row-label">Yttertak</span><span class="doc-row-val ok">TG 1</span></div>
+              <div class="doc-row"><span class="doc-row-label">Bad</span><span class="doc-row-val warn">TG 2 – Avvik</span></div>
+              <div class="doc-row"><span class="doc-row-label">Elektrisk</span><span class="doc-row-val warn">TG 2 – Avvik</span></div>
+              <div class="doc-wb"><strong>Bad (TG2):</strong> Tettesjikt 18 år. Est. kr 80–120 000.</div>
+              <div class="doc-wb"><strong>Elektrisk (TG2):</strong> Eldre sikringsskap. Est. kr 15–25 000.</div>
+            </div>
+            <div class="doc-sc" id="ds-heftelser">
+              <div class="doc-h3">Tinglyste heftelser</div>
+              <div class="doc-row"><span class="doc-row-label">Panteheftelse</span><span class="doc-row-val ok">Innfridd</span></div>
+              <div class="doc-row"><span class="doc-row-label">Elektrisk ledning</span><span class="doc-row-val">Tinglyst 1994</span></div>
+              <div class="doc-hl"><strong>Vurdering:</strong> Ingen uvanlige heftelser.</div>
+            </div>
+            <div class="doc-sc" id="ds-sameie">
+              <div class="doc-h3">Sameie</div>
+              <div class="doc-row"><span class="doc-row-label">Forkjøpsrett</span><span class="doc-row-val alert">Ja – gjelder</span></div>
+              <div class="doc-row"><span class="doc-row-label">Frist</span><span class="doc-row-val">20 virkedager</span></div>
+              <div class="doc-row"><span class="doc-row-label">Årsresultat</span><span class="doc-row-val ok">+kr 124 000</span></div>
+              <div class="doc-ab"><strong>Viktig:</strong> Alle 28 sameiere må varsles etter budaksept.</div>
+            </div>
+            <div class="doc-sc" id="ds-nabolag">
+              <div class="doc-h3">Nabolag</div>
+              <div class="doc-row"><span class="doc-row-label">Barneskole</span><span class="doc-row-val">8 min gange</span></div>
+              <div class="doc-row"><span class="doc-row-label">T-bane</span><span class="doc-row-val">6 min gange</span></div>
+              <div class="doc-hl"><strong>Nabolagsindeks:</strong> Trygghet 8.4 · Grøntareal 9.1</div>
+            </div>
+          </div>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-panel-header">
+            <div class="ai-avatar-sm">B</div>
+            <div><div class="ai-panel-name">BoligBlikk</div><div class="ai-status">● Analyserer</div></div>
+          </div>
+          <div class="ai-msgs" id="dMsgs">
+            <div class="amsg bot"><span class="amsg-who">BoligBlikk</span><div class="amsg-bubble">Klikk på en seksjon til venstre for analyse, eller still meg et spørsmål.</div></div>
+          </div>
+          <div class="typing-row" id="dTyping"><span class="amsg-who">BoligBlikk</span><div class="typing-bub"><span></span><span></span><span></span></div></div>
+          <div class="quick-chips">
+            <button class="qchip" onclick="da('Hva er totalpris inkl. fellesgjeld?')">Totalpris</button>
+            <button class="qchip" onclick="da('Hva betyr TG2 på badet?')">TG2 bad</button>
+            <button class="qchip" onclick="da('Gjelder forkjøpsrett her?')">Forkjøpsrett</button>
+            <button class="qchip" onclick="da('Er sameiet i god stand?')">Sameiets økonomi</button>
+          </div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="dInput" placeholder="Spør om salgsoppgaven…" onkeypress="if(event.key==='Enter')sendDemo()">
+            <button class="ai-send" onclick="sendDemo()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="kontakt-grid">
+    <div>
+      <div class="section-tag reveal">Ta kontakt</div>
+      <h2 class="reveal d1">Interessert i prosjektet?</h2>
+      <p class="body-p reveal d2">Vi er studenter i faget AI i praksis. Ta kontakt om du har innspill eller spørsmål.</p>
+      <div class="meta-list reveal d3">
+        <div class="meta-row"><span class="meta-k">Fag</span><span class="meta-v">AI i praksis</span></div>
+        <div class="meta-row"><span class="meta-k">Bransje</span><span class="meta-v">Eiendomsmegling</span></div>
+        <div class="meta-row"><span class="meta-k">Mål</span><span class="meta-v">Redusere tidsbruk og heve kvaliteten på rådgivning for meglere</span></div>
+      </div>
+    </div>
+    <div class="reveal d1">
+      <div class="form" id="theForm">
+        <div class="form-2">
+          <div class="fg"><label>Navn</label><input type="text" placeholder="Ditt navn"></div>
+          <div class="fg"><label>E-post</label><input type="email" placeholder="din@epost.no"></div>
+        </div>
+        <div class="fg"><label>Melding</label><textarea rows="5" placeholder="Skriv din melding her…"></textarea></div>
+        <button class="btn-blue" style="align-self:flex-start" onclick="submitForm()">Send melding</button>
+        <div class="form-ok" id="formOk">✓ Takk! Vi tar kontakt snart.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="f-logo">BoligBlikk</span>
+  <span class="f-copy">© 2025 · AI i praksis-prosjekt</span>
+</footer>
+
+<script>
+// Scroll reveal
+const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on');}),{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ── UPLOAD ──
+let pdfBase64 = '';
+let conversationHistory = [];
+
+function ev(e, cls) { e.preventDefault(); document.getElementById('dropZone').className = 'upload-zone reveal d1 on ' + cls; }
+function drop(e) { e.preventDefault(); document.getElementById('dropZone').className = 'upload-zone reveal d1 on'; const f = e.dataTransfer.files[0]; if(f) processFile(f); }
+function handleFile(e) { const f = e.target.files[0]; if(f) processFile(f); }
+
+function processFile(file) {
+  document.getElementById('dropZone').style.display = 'none';
+  document.getElementById('processing').classList.add('show');
+  document.getElementById('chatTitle').textContent = file.name.replace('.pdf','');
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    pdfBase64 = e.target.result.split(',')[1];
+    await analyzeDocument(file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeDocument(filename) {
+  document.getElementById('procText').textContent = 'Analyserer salgsoppgaven med AI…';
+  console.log('Starter analyse, PDF lengde:', pdfBase64.length);
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: `Du er BoligBlikk, en AI-assistent for norske eiendomsmeglere. Du analyserer salgsoppgaver og gir korte, presise svar på norsk med kildehenvisninger.
+
+Svar alltid strukturert og konkret. Når du flagger noe viktig, bruk formatet:
+🔴 KRITISK: [punkt]
+🟡 OBS: [punkt]  
+🟢 OK: [punkt]
+
+Henvis alltid til siden eller paragrafen der informasjonen finnes.`,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 }
+              },
+              {
+                type: 'text',
+                text: `Analyser denne salgsoppgaven og gi meg en rask oversikt over:
+1. Boligens grunninfo (adresse, type, størrelse, pris, fellesgjeld, totalpris)
+2. De viktigste punktene megleren MÅ være obs på (TG2/TG3, høy fellesgjeld, forkjøpsrett, heftelser)
+3. 3-4 hurtigspørsmål megleren bør stille
+
+Vær kort og presis. Bruk norsk.`
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    console.log('API svar:', JSON.stringify(data).substring(0, 200));
+    
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      console.error('Uventet svar fra API:', data);
+      showErrorFallback(filename);
+      return;
+    }
+    const analysisText = data.content[0].text;
+
+    // Store in conversation
+    conversationHistory = [
+      {
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+          { type: 'text', text: 'Analyser denne salgsoppgaven og gi meg en rask oversikt.' }
+        ]
+      },
+      { role: 'assistant', content: analysisText }
+    ];
+
+    showResults(analysisText, filename);
+  } catch(err) {
+    console.error('Feil:', err);
+    showErrorFallback(filename);
+  }
+}
+
+function showResults(analysis, filename) {
+  document.getElementById('processing').classList.remove('show');
+  document.getElementById('uploadChat').classList.add('show');
+
+  // Render summary
+  renderSummary(analysis);
+
+  // Clear chat and show initial message
+  const msgs = document.getElementById('chatMsgs');
+  msgs.innerHTML = '';
+  addMsg('bot', analysis, null);
+
+  // Generate smart chips from analysis
+  const chips = document.getElementById('chatChips');
+  chips.innerHTML = '';
+  const autoChips = [];
+  const al = analysis.toLowerCase();
+  if(al.includes('fellesgjeld')) autoChips.push('Hva er totalpris inkl. fellesgjeld?');
+  if(al.includes('tg2') || al.includes('tg 2')) autoChips.push('Hva koster det å utbedre TG2-punktene?');
+  if(al.includes('forkjøpsrett')) autoChips.push('Hva må jeg gjøre med forkjøpsretten?');
+  if(al.includes('heftelse')) autoChips.push('Er heftelsene problematiske?');
+  if(autoChips.length === 0) { autoChips.push('Hva er de viktigste punktene?'); autoChips.push('Er det noe jeg bør være obs på?'); }
+  autoChips.forEach(q => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = q;
+    b.onclick = () => { document.getElementById('chatInput').value = q; sendChat(); };
+    chips.appendChild(b);
+  });
+}
+
+function renderSummary(text) {
+  const body = document.getElementById('summaryBody');
+  const lines = text.split('\n').filter(l => l.trim());
+  let html = '';
+  for (const line of lines) {
+    if (line.startsWith('🔴')) {
+      html += `<div class="flag-box alert"><strong>🔴 Kritisk:</strong> ${line.replace('🔴 KRITISK:','').replace('🔴','').trim()}</div>`;
+    } else if (line.startsWith('🟡')) {
+      html += `<div class="flag-box warn"><strong>🟡 Obs:</strong> ${line.replace('🟡 OBS:','').replace('🟡','').trim()}</div>`;
+    } else if (line.startsWith('🟢')) {
+      html += `<div class="flag-box ok"><strong>🟢 OK:</strong> ${line.replace('🟢 OK:','').replace('🟢','').trim()}</div>`;
+    } else if (line.match(/^#+\s/)) {
+      html += `<div class="sum-tag">${line.replace(/^#+\s/,'')}</div>`;
+    } else if (line.trim()) {
+      html += `<div class="sum-text" style="margin-bottom:0.5rem;">${line}</div>`;
+    }
+  }
+  body.innerHTML = html || '<div class="sum-text">Analyse fullført. Still spørsmål i chatten.</div>';
+}
+
+function showErrorFallback(filename) {
+  document.getElementById('processing').classList.remove('show');
+  document.getElementById('uploadChat').classList.add('show');
+  document.getElementById('summaryBody').innerHTML = '<div class="flag-box info"><strong>Demo-modus:</strong> Kobler til AI-analyse. Bruk chatten til å stille spørsmål om dokumentet.</div>';
+  const msgs = document.getElementById('chatMsgs');
+  msgs.innerHTML = '';
+  addMsg('bot', 'Jeg har mottatt "' + filename + '". Still meg spørsmål om innholdet – for eksempel om pris, fellesgjeld, tilstandsgrad eller forkjøpsrett.', null);
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  addMsg('user', q, null);
+  showChatTyping();
+
+  conversationHistory.push({ role: 'user', content: q });
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: 'Du er BoligBlikk, en AI-assistent for norske eiendomsmeglere. Svar kort, presist og på norsk. Henvis alltid til siden eller paragrafen der informasjonen finnes.',
+        messages: conversationHistory
+      })
+    });
+    const data = await response.json();
+    const answer = data.content[0].text;
+    conversationHistory.push({ role: 'assistant', content: answer });
+    hideChatTyping();
+    addMsg('bot', answer, null);
+  } catch(err) {
+    hideChatTyping();
+    addMsg('bot', 'Beklager, klarte ikke å hente svar akkurat nå. Prøv igjen.', null);
+  }
+}
+
+function addMsg(who, text, src) {
+  const c = document.getElementById('chatMsgs');
+  const t = document.getElementById('chatTyping');
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  const html = text.replace(/\n/g,'<br>').replace(/🔴/g,'🔴').replace(/🟡/g,'🟡').replace(/🟢/g,'🟢');
+  d.innerHTML = `<span class="msg-who">${who==='user'?'Deg':'BoligBlikk'}</span><div class="msg-bub">${html}</div>${src?`<span class="msg-src">${src}</span>`:''}`;
+  c.insertBefore(d, t);
+  c.scrollTop = c.scrollHeight;
+}
+function showChatTyping(){const t=document.getElementById('chatTyping');t.classList.add('show');document.getElementById('chatMsgs').scrollTop=99999;}
+function hideChatTyping(){document.getElementById('chatTyping').classList.remove('show');}
+
+// ── DEMO ──
+const dm={oversikt:{t:'Boligoversikt',m:'Side 1–3'},oekonomi:{t:'Økonomi',m:'Side 5–8'},tilstand:{t:'Tilstandsrapport',m:'Side 12–18'},heftelser:{t:'Heftelser',m:'Side 9–11'},sameie:{t:'Sameie',m:'Side 4'},nabolag:{t:'Nabolag',m:'Side 19–20'}};
+const dr={oversikt:{t:'Totalpris inkl. fellesgjeld er kr 5 362 000 – vesentlig høyere enn prisantydningen. Energimerke D kan være et samtalepunkt.',s:'s. 1–3'},oekonomi:{t:'Fellesgjelden på kr 412 000 er høy. Månedlig felleskostnad kr 4 820 inkl. renter og avdrag på 6,25 %.',s:'s. 5–8'},tilstand:{t:'To TG2-punkter: Bad (est. kr 80–120 000) og elektrisk (est. kr 15–25 000). Samlet: ca. kr 100–145 000.',s:'Tilstandsrapport'},heftelser:{t:'Ingen problematiske heftelser. Pantelånet er innfridd.',s:'s. 9–11'},sameie:{t:'⚠️ Forkjøpsrett gjelder! Alle 28 sameiere må varsles etter budaksept – frist 20 virkedager.',s:'Eierseksjonsloven §45'},nabolag:{t:'Godt nabolag – skole 8 min, T-bane 6 min, Maridalen 7 min sykkel.',s:'s. 19–20'}};
+const df={'Hva er totalpris inkl. fellesgjeld?':{t:'Totalpris inkl. fellesgjeld er kr 5 362 000 (prisantydning kr 4 950 000 + fellesgjeld kr 412 000).',s:'s. 1 og s. 6'},'Hva betyr TG2 på badet?':{t:'TG2 = avvik som kan kreve tiltak. Tettesjikt 18 år. Estimert utbedring: kr 80–120 000.',s:'Tilstandsrapport s. 14 · Avhendingsloven §3-9'},'Gjelder forkjøpsrett her?':{t:'Ja. Alle 28 sameiere må varsles etter budaksept – 20 virkedagers frist.',s:'Eierseksjonsloven §45'},'Er sameiet i god stand?':{t:'Relativt solid – årsresultat +kr 124 000. Merk fasaderehabilitering 2026.',s:'Årsregnskap 2023'}};
+
+function ds(k){document.querySelectorAll('.doc-sc').forEach(el=>el.classList.remove('v'));document.getElementById('ds-'+k).classList.add('v');document.querySelectorAll('.doc-sec').forEach(el=>el.classList.remove('active'));document.getElementById('dn-'+k).classList.add('active');document.getElementById('dTitle').textContent=dm[k].t;document.getElementById('dMeta').textContent=dm[k].m;showDT();setTimeout(()=>{hideDT();const r=dr[k];addDMsg('bot',r.t,r.s);},900);}
+function da(q){document.getElementById('dInput').value=q;sendDemo();}
+function sendDemo(){const i=document.getElementById('dInput');const q=i.value.trim();if(!q)return;i.value='';addDMsg('user',q,null);showDT();const r=df[q]||{t:'I den fullstendige versjonen søker BoligBlikk gjennom hele salgsoppgaven for et presist svar.',s:null};setTimeout(()=>{hideDT();addDMsg('bot',r.t,r.s);},900);}
+function addDMsg(who,text,src){const c=document.getElementById('dMsgs');const t=document.getElementById('dTyping');const d=document.createElement('div');d.className='amsg '+who;d.innerHTML=`<span class="amsg-who">${who==='user'?'Deg':'BoligBlikk'}</span><div class="amsg-bubble">${text}</div>${src?`<span class="amsg-src">${src}</span>`:''}`;c.insertBefore(d,t);c.scrollTop=c.scrollHeight;}
+function showDT(){const t=document.getElementById('dTyping');t.classList.add('show');document.getElementById('dMsgs').scrollTop=99999;}
+function hideDT(){document.getElementById('dTyping').classList.remove('show');}
+function submitForm(){document.getElementById('formOk').style.display='block';document.querySelector('#theForm .btn-blue').style.display='none';}
+</script>
+</body>
+</html>
